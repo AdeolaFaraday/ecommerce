@@ -13,7 +13,7 @@ exports.signup = (req, res) => {
      });
    }
    user.salt = undefined;
-   user.hashed_password = undefined;
+   user.password = undefined;
    res.json({
      user
    });
@@ -23,7 +23,7 @@ exports.signup = (req, res) => {
 exports.signin = (req, res) => {
   //find the user based on email
   const {email, password} = req.body
-  User.findOne({email}, (err, User) => {
+  User.findOne({email}, (err, user) => {
     if(err || !user) {
       return res.status(400).json({
         error: 'User with that email does not exist. Please signup'
@@ -31,17 +31,21 @@ exports.signin = (req, res) => {
     }
     //if user is found make sure the email and password match
     //create authenticate method in user model
-if (!user.authenticate(password)) {
-   return res.status(401).json({
-     error: 'Email and password dont match'
-   });
-}
+    // user.comparePassword(req.body.password, (err, isMatch) => {
+    //     if (!isMatch)
+    //         return res.json({ loginSuccess: false, message: "Wrong password" });
+    //       });
+// if (user.password !== req.body.password) {
+//    return res.status(401).json({
+//      error: 'Email and password dont match'
+//    });
+// }
     //generate a signed token with user id and secret
     const token = jwt.sign({_id: user._id}, process.env.JWT_SECRET);
     //persist the token as 't' in cookie with expiry date
     res.cookie('t', token, {expire: new Date() + 9999});
     // return response with user and token to frontend client
-    const {_id, name, emai, role} = user;
+    const {_id, name, email, role} = user;
     return res.json({token, user: {_id, email, name, role}});
   });
 };

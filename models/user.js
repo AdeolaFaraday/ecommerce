@@ -1,8 +1,8 @@
 const mongoose = require("mongoose");
-const crypto = require("crypto");
-// const bcrypt = require("bcrypt")
-// const saltRounds = 10;
-const uuidv1 = require("uuid/v1");
+// const crypto = require("crypto");
+const bcrypt = require("bcrypt")
+const saltRounds = 10;
+// const uuidv1 = require("uuid/v1");
 
 const userSchema = new mongoose.Schema({
   name:{
@@ -17,7 +17,7 @@ const userSchema = new mongoose.Schema({
     required: true,
     unique: 32
   },
-  hashed_password:{
+  password:{
     type: String,
     required: true,
   },
@@ -39,36 +39,59 @@ const userSchema = new mongoose.Schema({
 );
 
 // virtual field
-userSchema
-.virtual("password")
-.set(function(password){
-  this._password = password;
-  this.salt = uuidv1();
-  this.hashed_password = this.encryptPassword(password);
-})
+// userSchema
+// .virtual("password")
+// .set(function(password){
+//   this._password = password;
+//   this.salt = uuidv1();
+//   this.hashed_password = this.encryptPassword(password);
+// })
+//
+// .get(function(){
+//   return this._password;
+// });
 
-.get(function(){
-  return this._password;
+userSchema.pre('save', function (next) {
+    var user = this;
+
+    if (user.isModified('password')) {
+        console.log('password changed')
+        bcrypt.genSalt(saltRounds, function (err, salt) {
+            if (err) return next(err);
+
+            bcrypt.hash(user.password, salt, function (err, hash) {
+                if (err) return next(err);
+                user.password = hash
+                next();
+            });
+        });
+    } else {
+        next();
+    };
 });
 
-// bcrypt.hash(req.body.password, saltRounds, function(err, hash){
-//
-// });
-userSchema.method = {
-  authenticate: function(plainText) {
-    return this.encryptPassword(plainText) === this.hashed_password;
-  },
-  encryptPassword: function(password) {
-    if (!password) return "";
-    try {
-      return crypto
-      .createHmac("sha1", this.salt)
-      .update(password)
-      .digest("hex");
-    } catch (err){
-      return "";
-    }
-  }
-};
+userSchema.methods.comparePassword = function (plainPassword, cb) {
+    bcrypt.compare(plainPassword, this.password, function (err, isMatch) {
+        if (err) return cb(err);
+        cb(null, isMatch)
+    })
+}
+
+// userSchema.method = {
+//   authenticate: function(plainText) {
+//     return this.encryptPassword(plainText) === this.hashed_password;
+//   },
+//   encryptPassword: function(password) {
+//     if (!password) return "";
+//     try {
+//       return crypto
+//       .createHmac("sha1", this.salt)
+//       .update(password)
+//       .digest("hex");
+//     } catch (err){
+//       return "";
+//     }
+//   }
+// };
 
 module.exports = mongoose.model("User", userSchema);
