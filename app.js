@@ -17,15 +17,6 @@ const orderRoutes = require('./routes/order');
 // app
 const app = express();
 
-// db
-mongoose
-    .connect(process.env.DATABASE, {
-        useNewUrlParser: true,
-        useCreateIndex: true,
-        useUnifiedTopology: true,
-        useFindAndModify: false
-    })
-    .then(() => console.log('DB Connected'));
 
 // middlewares
 app.use(morgan('dev'));
@@ -42,8 +33,19 @@ app.use('/api', productRoutes);
 app.use('/api', braintreeRoutes);
 app.use('/api', orderRoutes);
 
+app.use('/api', (error, res, req) => {
+  res.status(500).json({
+    error: 'Server Error'
+  })
+})
+
 const port = process.env.PORT || 8000;
 
-app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
-});
+app.listen(port, () => mongoose
+    .connect(process.env.DATABASE, {
+        useNewUrlParser: true,
+        useCreateIndex: true,
+        useUnifiedTopology: true,
+        useFindAndModify: false
+    })
+    .then(() => console.log('Server and DB Connected')));
