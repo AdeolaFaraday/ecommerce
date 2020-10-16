@@ -4,6 +4,11 @@ const expressJwt = require('express-jwt'); // for authorization check
 const { errorHandler } = require('../helpers/dbErrorHandler');
 
 // using promise
+
+//NB: a parameter validation middleware run in the 
+//before the api method is fired, for db injection, 
+//please check api routes
+
 exports.signup = (req, res) => {
     // console.log("req.body", req.body);
     const user = new User(req.body);
