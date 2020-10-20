@@ -33,7 +33,7 @@ app.use('/api', productRoutes);
 app.use('/api', braintreeRoutes);
 app.use('/api', orderRoutes);
 
-app.use('/api', (error, res, req) => {
+app.use((error, res, req, next) => {
   res.status(500).json({
     error: 'Server Error'
   })
